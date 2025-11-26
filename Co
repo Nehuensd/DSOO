@@ -1,0 +1,44 @@
+name: Convert IPYNB to PDF
+
+on:
+  push:
+    paths:
+      - '**/*.ipynb'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyter nbconvert
+          pip install weasyprint  # opcional para HTML->PDF
+          # Si quieres LaTeX (más pesado) descomenta:
+          sudo apt-get update
+          sudo apt-get install -y texlive-xetex texlive-fonts-recommended texlive-latex-recommended
+
+      - name: Run notebook (optional)
+        run: |
+          jupyter nbconvert --to notebook --execute path/to/tu_notebook.ipynb --output executed.ipynb
+
+      - name: Convert to PDF
+        run: |
+          # Opción A: nbconvert vía LaTeX
+          jupyter nbconvert --to pdf executed.ipynb --output output/tu_notebook.pdf
+          # Opción B: HTML -> PDF con weasyprint
+          # jupyter nbconvert --to html executed.ipynb --output tmp.html
+          # weasyprint tmp.html output/tu_notebook.pdf
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-pdf
+          path: output/tu_notebook.pdf
